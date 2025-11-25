@@ -122,12 +122,12 @@ const Manager = () => {
       <div className=" p-3 md:mycontainer min-h-[88.2vh] ">
         <h1 className="text-4xl text font-bold text-center">
           <span className="text-green-500"> &lt;</span>
-          <span>Pass</span>
-          <span className="text-green-500">OP/&gt;</span>
+          <span>Password</span>
+          <span className="text-green-500"> Manager /&gt;</span>
         </h1>
 
         <p className="text-green-900 text-lg text-center">
-          Your own Password Manager
+            Manage your passwords securely
         </p>
 
         <div className="flex flex-col p-4 text-black gap-8 items-center">
