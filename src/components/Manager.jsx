@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import { v4 as uuidv4 } from "uuid";
 import "react-toastify/dist/ReactToastify.css";
 
 const API = import.meta.env.VITE_API_URL;
@@ -8,9 +7,10 @@ const API = import.meta.env.VITE_API_URL;
 const Manager = () => {
   const ref = useRef();
   const passwordRef = useRef();
-  const [form, setform] = useState({ site: "", username: "", password: "" });
+  const [form, setform] = useState({ site: "", username: "", password: "", id: null });
   const [passwordArray, setPasswordArray] = useState([]);
 
+  // Fetch all passwords from backend
   const getPasswords = async () => {
     try {
       let req = await fetch(`${API}/`);
@@ -25,15 +25,13 @@ const Manager = () => {
     getPasswords();
   }, []);
 
+  // Copy text to clipboard
   const copyText = (text) => {
-    toast("Copied to clipboard!", {
-      position: "top-right",
-      autoClose: 3000,
-      theme: "dark",
-    });
+    toast("Copied to clipboard!", { theme: "dark" });
     navigator.clipboard.writeText(text);
   };
 
+  // show password toggle
   const showPassword = () => {
     if (passwordRef.current.type === "password") {
       passwordRef.current.type = "text";
@@ -44,65 +42,69 @@ const Manager = () => {
     }
   };
 
+  // Save or update password
   const savePassword = async () => {
-    if (
-      form.site.length > 3 &&
-      form.username.length > 3 &&
-      form.password.length > 3
-    ) {
-      if (form.id) {
-        // editing existing password → delete old first
-        await fetch(`${API}/`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: form.id }),
-        });
-      } else {
-        form.id = uuidv4(); // create new ID
-      }
+    const { site, username, password, id } = form;
 
-      // update UI instantly
-      setPasswordArray([
-        ...passwordArray.filter((p) => p.id !== form.id),
-        form,
-      ]);
-
-      // save to backend
-      await fetch(`${API}/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      setform({ site: "", username: "", password: "" });
-
-      toast("Password saved!", { theme: "dark" });
-    } else {
+    if (site.length < 3 || username.length < 3 || password.length < 3) {
       toast("Error: Password not saved!");
+      return;
     }
-  };
 
-  const deletePassword = async (id) => {
-    let c = confirm("Do you really want to delete this password?");
-    if (c) {
-      setPasswordArray(passwordArray.filter((item) => item.id !== id));
-
+    // If editing → delete old version first
+    if (id) {
       await fetch(`${API}/`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-
-      toast("Password Deleted!", { theme: "dark" });
     }
+
+    // Save to backend
+    let res = await fetch(`${API}/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ site, username, password }),
+    });
+
+    let data = await res.json();
+
+    // Refresh data properly
+    await getPasswords();
+
+    // Clear form
+    setform({ site: "", username: "", password: "", id: null });
+
+    toast("Password saved!", { theme: "dark" });
   };
 
+  // Delete password
+  const deletePassword = async (id) => {
+    let c = confirm("Do you really want to delete this password?");
+    if (!c) return;
+
+    await fetch(`${API}/`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    // reload list
+    await getPasswords();
+
+    toast("Password Deleted!", { theme: "dark" });
+  };
+
+  // Edit password
   const editPassword = (id) => {
+    let item = passwordArray.find((i) => i.id === id);
+
     setform({
-      ...passwordArray.filter((i) => i.id === id)[0],
+      site: item.site,
+      username: item.username,
+      password: item.password,
       id: id,
     });
-    setPasswordArray(passwordArray.filter((item) => item.id !== id));
   };
 
   const handleChange = (e) => {
@@ -112,6 +114,7 @@ const Manager = () => {
   return (
     <>
       <ToastContainer />
+
       <div className="absolute inset-0 -z-10 h-full w-full bg-green-50 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-green-400 opacity-20 blur-[100px]"></div>
       </div>
