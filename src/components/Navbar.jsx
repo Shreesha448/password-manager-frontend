@@ -6,8 +6,8 @@ const Navbar = () => {
             <div className="mycontainer flex justify-between items-center px-4 py-5 h-14">
 
                 <div className="logo font-bold text-white text-2xl">
-                    <span className='text-green-500'> &lt;</span>
-                    <span>Pass</span><span className='text-green-500'>OP/&gt;</span>
+                    <span className='text-green-500'></span>
+                    <span>Password - Manager</span><span className='text-green-500'></span>
                 </div>
                 {/* <ul>
                     <li className='flex gap-4 '>
